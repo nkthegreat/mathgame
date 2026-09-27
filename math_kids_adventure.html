@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Μαγικό Μαθηματικό Παιχνίδι</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for playful typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Confetti library for celebrations -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            background: linear-gradient(135deg, #fbcfe8 0%, #bae6fd 50%, #fed7aa 100%);
+            min-height: 100vh;
+            user-select: none;
+        }
+        .bouncy-btn {
+            transition: transform 0.1s ease, background-color 0.2s ease;
+        }
+        .bouncy-btn:active {
+            transform: scale(0.92);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .timer-pulse {
+            animation: pulse-ring 1s infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between p-4 md:p-8">
+
+    <header class="w-full max-w-2xl flex justify-between items-center bg-white/80 backdrop-blur-md p-4 rounded-3xl shadow-lg mb-4">
+        <div class="flex items-center gap-2">
+            <span class="text-3xl">⭐</span>
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold text-pink-600">Μαθηματική Περιπέτεια</h1>
+                <p class="text-xs text-gray-500">Για μικρούς μαθητές!</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="bg-amber-100 border-2 border-amber-300 px-4 py-2 rounded-2xl flex items-center gap-2 shadow-inner">
+                <span class="text-2xl">🏆</span>
+                <span id="scoreDisplay" class="text-xl font-bold text-amber-700">0</span>
+            </div>
+            <button onclick="toggleSound()" id="soundBtn" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 p-3 rounded-2xl text-xl shadow-md bouncy-btn">
+                🔊
+            </button>
+        </div>
+    </header>
+
+    <main class="w-full max-w-2xl bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-6 md:p-10 flex flex-col items-center relative overflow-hidden min-h-[420px] justify-center">
+
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="flex flex-col items-center text-center space-y-6">
+            <div class="text-7xl md:text-8xl floating">🐱‍👤🎉</div>
+            <h2 class="text-3xl md:text-4xl font-bold text-indigo-600">Έτοιμος για παιχνίδι;</h2>
+            <p class="text-gray-600 text-base md:text-lg max-w-md">Λύσε προσθέσεις, πρόλαβε το χρονόμετρο και μάζεψε απίθανα ζωάκια και αυτοκόλλητα!</p>
+            <button onclick="startGame()" class="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-2xl px-10 py-4 rounded-3xl shadow-lg shadow-pink-300/50 bouncy-btn flex items-center gap-3">
+                <span>🚀</span> Ξεκίνα Τώρα!
+            </button>
+        </div>
+
+        <!-- Game Play Screen -->
+        <div id="gameScreen" class="hidden w-full flex flex-col items-center space-y-6">
+            <!-- Timer Bar & Round Info -->
+            <div class="w-full flex justify-between items-center bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">⏳</span>
+                    <span class="font-bold text-indigo-700">Χρόνος:</span>
+                </div>
+                <div class="w-1/2 bg-gray-200 h-4 rounded-full overflow-hidden shadow-inner">
+                    <div id="timerBar" class="bg-gradient-to-r from-green-400 to-emerald-500 h-full w-full transition-all duration-1000"></div>
+                </div>
+                <span id="timerText" class="font-bold text-lg text-emerald-600 w-8 text-right">10s</span>
+            </div>
+
+            <!-- Visual Math Problem Container -->
+            <div class="flex flex-col items-center space-y-4 my-4 w-full">
+                <!-- Emoji Visual representations -->
+                <div id="visualObjects" class="flex flex-wrap justify-center gap-4 min-h-[70px] items-center bg-amber-50/50 p-3 rounded-2xl w-full border border-amber-100">
+                    <!-- Dynamic visual objects inserted here -->
+                </div>
+
+                <!-- Equation text -->
+                <div class="flex items-center justify-center gap-3 md:gap-6 text-4xl md:text-6xl font-bold text-slate-700">
+                    <span id="num1" class="bg-pink-100 text-pink-700 px-5 py-3 rounded-3xl shadow-md border-2 border-pink-200">3</span>
+                    <span class="text-indigo-500">+</span>
+                    <span id="num2" class="bg-sky-100 text-sky-700 px-5 py-3 rounded-3xl shadow-md border-2 border-sky-200">2</span>
+                    <span class="text-slate-400">=</span>
+                    <span class="bg-amber-100 text-amber-700 px-6 py-3 rounded-3xl shadow-md border-2 border-amber-200">?</span>
+                </div>
+            </div>
+
+            <!-- Answer Options Grid -->
+            <div id="optionsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-md mt-4">
+                <!-- Buttons will be dynamically inserted -->
+            </div>
+        </div>
+
+        <!-- Reward Modal / Popup Screen -->
+        <div id="rewardScreen" class="hidden flex flex-col items-center text-center space-y-5 animate-bounce-in">
+            <div class="text-7xl md:text-8xl floating" id="rewardEmoji">🐶</div>
+            <div class="bg-amber-100 border-2 border-amber-300 px-6 py-2 rounded-full text-amber-800 font-bold text-lg shadow-sm">
+                Μπράβο! Κέρδισες νέο φίλο! 🎉
+            </div>
+            <h3 id="rewardName" class="text-2xl font-bold text-indigo-700">Χαριτωμένο Σκυλάκι</h3>
+            <p class="text-gray-500 text-sm">Προστέθηκε στη συλλογή σου στο Δωμάτιο Θησαυρών!</p>
+            <div class="flex gap-4">
+                <button onclick="nextRound()" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-xl px-8 py-3 rounded-2xl shadow-lg bouncy-btn">
+                    Επόμενη Πρόκληση ➔
+                </button>
+            </div>
+        </div>
+
+        <!-- Trophy Room / Collection Screen -->
+        <div id="trophyScreen" class="hidden w-full flex flex-col items-center space-y-4">
+            <h2 class="text-2xl font-bold text-indigo-600">🏆 Το Δωμάτιο Θησαυρών Σου</h2>
+            <p class="text-sm text-gray-500">Εδώ μαζεύονται όλα τα δώρα και τα ζωάκια που κέρδισες!</p>
+            <div id="collectionGrid" class="grid grid-cols-3 md:grid-cols-4 gap-3 w-full max-h-60 overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-200">
+                <!-- Collected items appear here -->
+            </div>
+            <button onclick="resumeGame()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold px-8 py-3 rounded-2xl shadow-md bouncy-btn">
+                Συνέχεια Παιχνιδιού 🎮
+            </button>
+        </div>
+
+    </main>
+
+    <footer class="w-full max-w-2xl flex justify-between items-center mt-4">
+        <button onclick="openTrophyRoom()" class="bg-white/80 hover:bg-white text-indigo-600 font-bold px-6 py-3 rounded-2xl shadow-md bouncy-btn flex items-center gap-2">
+            <span>🎁</span> Συλλογή (<span id="collectionCount">0</span>)
+        </button>
+        <button onclick="resetGame()" class="bg-rose-100 hover:bg-rose-200 text-rose-600 font-bold px-5 py-3 rounded-2xl shadow-md bouncy-btn">
+            🔄 Επανεκκίνηση
+        </button>
+    </footer>
+
+    <script>
+        // Game State Variables
+        let score = 0;
+        let currentNum1 = 0;
+        let currentNum2 = 0;
+        let correctAnswer = 0;
+        let timer = null;
+        let timeLeft = 10;
+        let soundEnabled = true;
+        let collection = [];
+
+        // Pool of cute reward items for children
+        const rewardPool = [
+            { emoji: '🐶', name: 'Χαριτωμένο Σκυλάκι' },
+            { emoji: '🐱', name: 'Γλυκιά Γατούλα' },
+            { emoji: '🐰', name: 'Χνουδωτό Κουνελάκι' },
+            { emoji: '🦊', name: 'Έξυπνη Αλεπού' },
+            { emoji: '🐼', name: 'Χαμογελαστό Πάντα' },
+            { emoji: '🦁', name: 'Μικρό Λιονταράκι' },
+            { emoji: '🦄', name: 'Μαγικός Μονόκερος' },
+            { emoji: '⭐', name: 'Χρυσό Αστέρι' },
+            { emoji: '🎈', name: 'Πολύχρωμο Μπαλόνι' },
+            { emoji: '🚀', name: 'Διαστημόπλοιο' },
+            { emoji: '🚗', name: 'Γρήγορο Αυτοκινητάκι' },
+            { emoji: '🎨', name: 'Παλέτα Ζωγραφικής' }
+        ];
+
+        // Web Audio API Synthesizer for cheerful sound effects
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'success') {
+                    // Joyful rising arpeggio
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(330, now); // E4
+                    osc.frequency.setValueAtTime(440, now + 0.1); // A4
+                    osc.frequency.setValueAtTime(554.37, now + 0.2); // C#5
+                    osc.frequency.setValueAtTime(659.25, now + 0.3); // E5
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                } else if (type === 'error') {
+                    // Gentle buzzer sound
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.setValueAtTime(110, now + 0.15);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'click') {
+                    // Soft pop sound
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                }
+            } catch (e) {
+                console.log("Audio play error:", e);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundBtn');
+            btn.textContent = soundEnabled ? '🔊' : '🔇';
+        }
+
+        // Screen switching helper functions
+        function showScreen(screenId) {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('rewardScreen').classList.add('hidden');
+            document.getElementById('trophyScreen').classList.add('hidden');
+            
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function startGame() {
+            playSound('click');
+            score = 0;
+            updateScoreDisplay();
+            showScreen('gameScreen');
+            generateNewProblem();
+        }
+
+        function resetGame() {
+            playSound('click');
+            clearInterval(timer);
+            showScreen('welcomeScreen');
+        }
+
+        // Generate kindergarten appropriate addition problem (sums up to 10 or 12)
+        function generateNewProblem() {
+            clearInterval(timer);
+            
+            // Numbers between 1 and 6 so sum is max 12
+            currentNum1 = Math.floor(Math.random() * 6) + 1;
+            currentNum2 = Math.floor(Math.random() * 6) + 1;
+            correctAnswer = currentNum1 + currentNum2;
+
+            document.getElementById('num1').textContent = currentNum1;
+            document.getElementById('num2').textContent = currentNum2;
+
+            renderVisualObjects(currentNum1, currentNum2);
+            generateOptions();
+            startTimer();
+        }
+
+        // Render cute fruit/animal emojis visually for 5-year-old aid
+        function renderVisualObjects(n1, n2) {
+            const container = document.getElementById('visualObjects');
+            container.innerHTML = '';
+            
+            const fruitEmojis = ['🍎', '⭐', '🎈', '🐱', '🍬', '🐸'];
+            const chosenEmoji = fruitEmojis[Math.floor(Math.random() * fruitEmojis.length)];
+
+            let html = '<div class="flex items-center gap-1 text-2xl md:text-3xl">';
+            for (let i = 0; i < n1; i++) {
+                html += `<span>${chosenEmoji}</span>`;
+            }
+            html += '</div><span class="text-2xl font-bold text-gray-400 mx-2">+</span><div class="flex items-center gap-1 text-2xl md:text-3xl">';
+            for (let i = 0; i < n2; i++) {
+                html += `<span>${chosenEmoji}</span>`;
+            }
+            html += '</div>';
+
+            container.innerHTML = html;
+        }
+
+        // Generate 4 multiple choice answers (1 correct, 3 wrong close numbers)
+        function generateOptions() {
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            let options = [correctAnswer];
+            while (options.length < 4) {
+                let wrong = correctAnswer + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 1);
+                if (wrong >= 0 && !options.includes(wrong)) {
+                    options.push(wrong);
+                }
+            }
+
+            // Shuffle options
+            options.sort(() => Math.random() - 0.5);
+
+            const colors = [
+                'bg-pink-400 hover:bg-pink-500 text-white shadow-pink-200',
+                'bg-sky-400 hover:bg-sky-500 text-white shadow-sky-200',
+                'bg-amber-400 hover:bg-amber-500 text-white shadow-amber-200',
+                'bg-emerald-400 hover:bg-emerald-500 text-white shadow-emerald-200'
+            ];
+
+            options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = `${colors[index % colors.length]} font-bold text-2xl md:text-3xl py-4 rounded-2xl shadow-lg bouncy-btn transition transform`;
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(opt, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        // Timer function for round countdown (10 seconds)
+        function startTimer() {
+            timeLeft = 10;
+            updateTimerDisplay();
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    handleWrongAnswer();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const timerBar = document.getElementById('timerBar');
+            const timerText = document.getElementById('timerText');
+            
+            let percentage = (timeLeft / 10) * 100;
+            timerBar.style.width = percentage + '%';
+            timerText.textContent = timeLeft + 's';
+
+            if (timeLeft <= 3) {
+                timerBar.className = 'bg-gradient-to-r from-rose-500 to-red-600 h-full transition-all duration-1000 timer-pulse';
+            } else {
+                timerBar.className = 'bg-gradient-to-r from-green-400 to-emerald-500 h-full transition-all duration-1000';
+            }
+        }
+
+        // Check child's selected answer
+        function checkAnswer(selected, btnElement) {
+            clearInterval(timer);
+            if (selected === correctAnswer) {
+                playSound('success');
+                score += 10;
+                updateScoreDisplay();
+                
+                // Trigger celebratory confetti
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+
+                triggerReward();
+            } else {
+                playSound('error');
+                btnElement.classList.add('bg-rose-600', 'shake');
+                setTimeout(() => {
+                    // Give another chance or proceed
+                    generateNewProblem();
+                }, 800);
+            }
+        }
+
+        function handleWrongAnswer() {
+            playSound('error');
+            // Show gentle message & move to next problem
+            setTimeout(() => {
+                generateNewProblem();
+            }, 1000);
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('scoreDisplay').textContent = score;
+        }
+
+        // Reward and collection handler
+        function triggerReward() {
+            const randomReward = rewardPool[Math.floor(Math.random() * rewardPool.length)];
+            collection.push(randomReward);
+            document.getElementById('collectionCount').textContent = collection.length;
+
+            document.getElementById('rewardEmoji').textContent = randomReward.emoji;
+            document.getElementById('rewardName').textContent = randomReward.name;
+
+            showScreen('rewardScreen');
+        }
+
+        function nextRound() {
+            playSound('click');
+            showScreen('gameScreen');
+            generateNewProblem();
+        }
+
+        function openTrophyRoom() {
+            playSound('click');
+            clearInterval(timer);
+            const grid = document.getElementById('collectionGrid');
+            grid.innerHTML = '';
+
+            if (collection.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-gray-400 py-8">Η συλλογή σου είναι άδεια. Λύσε μαθηματικά για να κερδίσεις θησαυρούς!</p>';
+            } else {
+                collection.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'flex flex-col items-center bg-white p-3 rounded-2xl shadow-md border border-amber-100 floating';
+                    card.innerHTML = `<span class="text-4xl">${item.emoji}</span><span class="text-xs font-bold text-slate-600 mt-1 text-center">${item.name}</span>`;
+                    grid.appendChild(card);
+                });
+            }
+
+            showScreen('trophyScreen');
+        }
+
+        function resumeGame() {
+            playSound('click');
+            showScreen('gameScreen');
+            generateNewProblem();
+        }
+    </script>
+</body>
+</html>
